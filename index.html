@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interiocularis - Meme Forum</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff5eb;
+        }
+
+        .header {
+            background-color: #ff6b00;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .nav {
+            background-color: #ff8533;
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 1rem;
+            padding: 0.5rem;
+        }
+
+        .nav a:hover {
+            background-color: #ff944d;
+            border-radius: 4px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Forum Styles */
+        .post {
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .role-badge {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+        }
+
+        .new-member { background-color: #e6e6e6; }
+        .beginner { background-color: #b3ffb3; }
+        .elite-beginner { background-color: #80bfff; }
+        .meme-member { background-color: #ffb366; }
+
+        /* Form Styles */
+        .form-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            margin: 2rem auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background-color: #ff6b00;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #ff944d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Interiocularis</h1>
+        <p>Share your best memes!</p>
+    </div>
+
+    <div class="nav">
+        <a href="#" onclick="showForum()">Forum</a>
+        <a href="#" onclick="showAuth()">New User? Join Us!</a>
+        <span id="userInfo" style="display: none;">
+            <a href="#" id="logout" onclick="logout()">Logout</a>
+        </span>
+    </div>
+
+    <div class="container">
+        <!-- Forum Section -->
+        <div id="forumSection">
+            <div id="postsList"></div>
+            <div id="newPost" style="display: none;">
+                <div class="form-container">
+                    <h2>Create New Post</h2>
+                    <div class="form-group">
+                        <label>Content:</label>
+                        <input type="text" id="postContent">
+                    </div>
+                    <button class="btn" onclick="createPost()">Post</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Section -->
+        <div id="authSection" style="display: none;">
+            <div class="form-container">
+                <h2>Login</h2>
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="loginUsername">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="loginPassword">
+                </div>
+                <button class="btn" onclick="login()">Login</button>
+
+                <hr style="margin: 2rem 0;">
+
+                <h2>Sign Up</h2>
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="signupUsername">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="signupPassword">
+                </div>
+                <button class="btn" onclick="signup()">Sign Up</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Local Storage Keys
+        const USERS_KEY = 'interiocularis_users';
+        const POSTS_KEY = 'interiocularis_posts';
+        const CURRENT_USER_KEY = 'interiocularis_current_user';
+
+        // Initialize local storage
+        if (!localStorage.getItem(USERS_KEY)) {
+            localStorage.setItem(USERS_KEY, JSON.stringify({}));
+        }
+        if (!localStorage.getItem(POSTS_KEY)) {
+            localStorage.setItem(POSTS_KEY, JSON.stringify([]));
+        }
+
+        // Check if user is logged in
+        function checkAuth() {
+            const currentUser = localStorage.getItem(CURRENT_USER_KEY);
+            if (currentUser) {
+                document.getElementById('userInfo').style.display = 'inline';
+                document.getElementById('newPost').style.display = 'block';
+                return true;
+            }
+            return false;
+        }
+
+        // Get user role based on post count
+        function getUserRole(postCount) {
+            if (postCount >= 190) return 'Meme Member';
+            if (postCount >= 120) return 'Elite Beginner';
+            if (postCount >= 50) return 'Beginner';
+            return 'New Member';
+        }
+
+        // Show forum section
+        function showForum() {
+            document.getElementById('forumSection').style.display = 'block';
+            document.getElementById('authSection').style.display = 'none';
+            loadPosts();
+        }
+
+        // Show auth section
+        function showAuth() {
+            document.getElementById('forumSection').style.display = 'none';
+            document.getElementById('authSection').style.display = 'block';
+        }
+
+        // Load and display posts
+        function loadPosts() {
+            const posts = JSON.parse(localStorage.getItem(POSTS_KEY));
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+            const postsList = document.getElementById('postsList');
+            postsList.innerHTML = '';
+
+            posts.forEach(post => {
+                const userPostCount = posts.filter(p => p.username === post.username).length;
+                const role = getUserRole(userPostCount);
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="user-info">
+                            <strong>${post.username}</strong>
+                            <span class="role-badge ${role.toLowerCase().replace(' ', '-')}">${role}</span>
+                        </div>
+                        <small>${new Date(post.timestamp).toLocaleString()}</small>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                `;
+                postsList.appendChild(postElement);
+            });
+        }
+
+        // Create new post
+        function createPost() {
+            const content = document.getElementById('postContent').value;
+            if (!content) return;
+
+            const currentUser = localStorage.getItem(CURRENT_USER_KEY);
+            if (!currentUser) return;
+
+            const posts = JSON.parse(localStorage.getItem(POSTS_KEY));
+            posts.push({
+                username: currentUser,
+                content: content,
+                timestamp: Date.now()
+            });
+            localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+
+            document.getElementById('postContent').value = '';
+            loadPosts();
+        }
+
+        // Login
+        function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+
+            if (users[username] && users[username] === password) {
+                localStorage.setItem(CURRENT_USER_KEY, username);
+                showForum();
+                checkAuth();
+            } else {
+                alert('Invalid username or password');
+            }
+        }
+
+        // Sign up
+        function signup() {
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const users = JSON.parse(localStorage.getItem(USERS_KEY));
+
+            if (users[username]) {
+                alert('Username already exists');
+                return;
+            }
+
+            users[username] = password;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            localStorage.setItem(CURRENT_USER_KEY, username);
+            showForum();
+            checkAuth();
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem(CURRENT_USER_KEY);
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('newPost').style.display = 'none';
+            showAuth();
+        }
+
+        // Initialize
+        showForum();
+        checkAuth();
+    </script>
+</body>
+</html>
